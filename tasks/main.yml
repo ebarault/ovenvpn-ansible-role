@@ -1,0 +1,121 @@
+---
+
+- name: pip install docker-py
+  pip:
+    name: docker-py
+    state: latest
+
+- name: Install pexpect python module for the expect task
+  pip:
+    name: pexpect
+    state: latest
+
+- name: Remove ovpn_env.sh to start from a new config file
+  file:
+    state: absent
+    path: "{{data_volume}}/ovpn_env.sh"
+
+- name: Ensure openvpn config is generated (base)
+  docker_container:
+    name: "tmp-openvpn-genconfig"
+    image: "kylemanna/openvpn"
+    detach: no
+    cleanup: yes
+    volumes:
+      - "{{data_volume}}:/etc/openvpn"
+    entrypoint: "ovpn_genconfig -u udp://{{url}} -m {{mtu}} -n {{dns}} -N -d -2 -C AES-256-CBC"
+
+- name: Ensure openvpn config is generated (adding routes)
+  docker_container:
+    name: "tmp-openvpn-genconfig-{{ item | to_uuid }}"
+    image: "kylemanna/openvpn"
+    detach: no
+    cleanup: yes
+    volumes:
+      - "{{data_volume}}:/etc/openvpn"
+    entrypoint: "ovpn_genconfig -p '{{item}}'"
+  with_items: "{{routes}}"
+
+- name: Check for PKI
+  stat:
+    path: "{{data_volume}}/pki"
+  register: openvpn_pki_check
+
+- name: "Generate PKI"
+  expect:
+    command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+    timeout: 300 # 5 minutes (Generating DH Params takes time)
+    responses:
+      "pass phrase": "{{pki_password}}"
+      "Common Name": "vpn.{{url}}"
+    creates: "{{data_volume}}/pki"
+  when: openvpn_pki_check.stat.exists == False
+
+- name: Ensure openvpn containers are (re)started
+  docker_container:
+    name: "ovpn-{{item.proto}}"
+    image: "kylemanna/openvpn"
+    pull: yes
+    state: started
+    recreate: yes
+    restart_policy: always
+    capabilities:
+      - NET_ADMIN
+    privileged: yes
+    ports:
+      - "{{item.port}}:1194/{{item.proto}}"
+    volumes:
+      - "{{data_volume}}:/etc/openvpn"
+    command: ovpn_run --proto {{item.proto}}
+  with_items:
+    - { port: 1194, proto: udp }
+    - { port: 443, proto: tcp }
+
+- name: Get current client list
+  command: docker run -v {{data_volume}}:/etc/openvpn --rm kylemanna/openvpn ovpn_listclients
+  check_mode: no
+  register: client_list
+
+- name: Ensure client keys are generated
+  expect:
+    command: "docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full {{item}} nopass"
+    responses:
+      "pass phrase": "{{pki_password}}"
+  when: "client_list.stdout.find(item) == -1"
+  with_items: "{{clients}}"
+
+- name: Create clients keys directories
+  file:
+    path: "{{keys_dir}}/{{item}}"
+    state: directory
+    mode: 0770
+  with_items: "{{clients}}"
+
+- name: Save generated keys
+  shell: docker run -v {{data_volume}}:/etc/openvpn --rm kylemanna/openvpn ovpn_getclient {{item[0]}} > {{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn
+  args:
+    creates: "{{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn"
+  with_nested:
+    - "{{clients}}"
+    - [ "udp" , "tcp" ]
+
+- name: Update TCP clients config to TCP
+  lineinfile:
+    path: "{{keys_dir}}/{{item}}/{{item}}_tcp.ovpn"
+    regexp: '^(.*) 1194 udp'
+    line: '\1 443 tcp'
+    backrefs: yes
+  with_items: "{{clients}}"
+
+- name: Generate OTP configurations
+  shell: docker run -v {{data_volume}}:/etc/openvpn --rm -t kylemanna/openvpn ovpn_otp_user {{item}} > {{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt
+  args:
+    creates: "{{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt"
+  with_items: "{{clients}}"
+
+- name: Change group ownership on openvpn clients to ec2-user
+  file:
+      path: "{{keys_dir}}"
+      recurse: yes
+      group: ec2-user
+      mode: 0770

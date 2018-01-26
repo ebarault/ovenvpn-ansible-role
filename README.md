@@ -1,0 +1,46 @@
+# Ansible role for OpenVPN (OTP version)
+
+## Usage
+
+- **openvpn.yml**
+
+```yml
+- name: OpenVPN installation and clients keys generation
+  hosts: my_hosts
+  become: yes
+
+  vars:
+    openvpn_data_volume: /data/openvpn
+    openvpn_keys_dir: /data/openvpn_clients
+    openvpn_url: my.vpn.host.com
+    openvpn_pki_password: "{{ lookup('env','OPENVPN_PKI_PASSWORD') }}"
+    openvpn_dns: 172.40.0.2
+    openvpn_routes:
+      - route 172.40.0.0 255.255.0.0
+    openvpn_clients:
+      - me
+      - myself
+      - mysidekick
+
+  tasks:
+    - name: Call ovenvpn role with vars
+      include_role:
+         name: openvpn
+      vars:
+        data_volume: "{{openvpn_data_volume}}"
+        keys_dir: "{{openvpn_keys_dir}}"
+        url: "{{openvpn_url}}"
+        pki_password: "{{openvpn_pki_password}}"
+        dns: "{{openvpn_dns}}"
+        routes: "{{openvpn_routes}}"
+        clients: "{{openvpn_clients}}"
+```
+
+- **requirements.yml**
+
+```yml
+# Install openvpn role from github
+- name: openvpn
+  src: https://github.com/ebarault/ovenvpn-ansible-role.git
+  version: origin/otp
+```
