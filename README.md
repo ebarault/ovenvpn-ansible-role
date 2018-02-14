@@ -1,4 +1,4 @@
-# Ansible role for OpenVPN (OTP version)
+# Ansible role for OpenVPN (Non OTP version)
 
 ## Usage
 

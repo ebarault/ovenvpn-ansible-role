@@ -23,7 +23,7 @@
     cleanup: yes
     volumes:
       - "{{data_volume}}:/etc/openvpn"
-    entrypoint: "ovpn_genconfig -u udp://{{url}} -m {{mtu}} -n {{dns}} -N -d -2 -C AES-256-CBC"
+    entrypoint: "ovpn_genconfig -u udp://{{url}} -m {{mtu}} -n {{dns}} -N -d"
 
 - name: Ensure openvpn config is generated (adding routes)
   docker_container:
@@ -105,12 +105,6 @@
     regexp: '^(.*) 1194 udp'
     line: '\1 443 tcp'
     backrefs: yes
-  with_items: "{{clients}}"
-
-- name: Generate OTP configurations
-  shell: docker run -v {{data_volume}}:/etc/openvpn --rm -t kylemanna/openvpn ovpn_otp_user {{item}} > {{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt
-  args:
-    creates: "{{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt"
   with_items: "{{clients}}"
 
 - name: Change group ownership on openvpn clients to ec2-user
