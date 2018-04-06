@@ -107,6 +107,25 @@
     backrefs: yes
   with_items: "{{clients}}"
 
+- name: Duplicate clients config for strict tunneling
+  copy:
+    remote_src: yes
+    src: "{{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn"
+    dest: "{{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}_strict.ovpn"
+    mode: 0770
+  with_nested:
+    - "{{clients}}"
+    - [ "udp" , "tcp" ]
+
+- name: Update clients config to strict tunneling
+  lineinfile:
+    path: "{{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}_strict.ovpn"
+    insertafter: EOF
+    line: redirect-gateway def1
+  with_nested:
+    - "{{clients}}"
+    - [ "udp" , "tcp" ]
+
 - name: Generate OTP configurations
   shell: docker run -v {{data_volume}}:/etc/openvpn --rm -t kylemanna/openvpn ovpn_otp_user {{item}} > {{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt
   args:
