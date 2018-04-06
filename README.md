@@ -42,5 +42,11 @@
 # Install openvpn role from github
 - name: openvpn
   src: https://github.com/ebarault/ovenvpn-ansible-role.git
-  version: origin/otp
+  version: origin/master
 ```
+
+## Client configurations
+
+Client configurations are in the `openvpn_keys_dir` directory for each client provided with the `openvpn_clients` param, for udp and tcp modes, in both strict and split tunneling flavors.
+
+You may use scp on the OpenVPN host to fetch the client configurations.
