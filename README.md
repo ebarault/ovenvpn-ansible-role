@@ -21,6 +21,8 @@
       - me
       - myself
       - mysidekick
+    openvpn_revoked_clients:
+      - thatguy
 
   tasks:
     - name: Call ovenvpn role with vars
@@ -34,6 +36,7 @@
         dns: "{{openvpn_dns}}"
         routes: "{{openvpn_routes}}"
         clients: "{{openvpn_clients}}"
+        revoked: "{{openvpn_revoked_clients}}"
 ```
 
 - **requirements.yml**
@@ -42,7 +45,7 @@
 # Install openvpn role from github
 - name: openvpn
   src: https://github.com/ebarault/ovenvpn-ansible-role.git
-  version: "1.0.otp"
+  version: "1.2.0.otp"
 ```
 
 ## Client configurations

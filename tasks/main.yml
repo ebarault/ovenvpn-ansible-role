@@ -43,7 +43,7 @@
 
 - name: "Generate PKI"
   expect:
-    command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+    command: docker exec -it ovpn-tcp ovpn_initpki
     timeout: 300 # 5 minutes (Generating DH Params takes time)
     responses:
       "pass phrase": "{{pki_password}}"
@@ -72,13 +72,28 @@
     - { port: 443, proto: tcp }
 
 - name: Get current client list
-  command: docker run -v {{data_volume}}:/etc/openvpn --rm kylemanna/openvpn ovpn_listclients
+  command: docker exec ovpn-tcp ovpn_listclients
   check_mode: no
   register: client_list
 
+- name: Revoke clients
+  expect:
+    command: "docker exec -it ovpn-tcp ovpn_revokeclient {{item}} remove"
+    responses:
+      "Continue": "yes"
+      "pass phrase": "{{pki_password}}"
+  when: "client_list.stdout.find(item) != -1"
+  with_items: "{{revoked}}"
+
+- name: Remove revoked client keys directories
+  file:
+    path: "{{keys_dir}}/{{item}}"
+    state: absent
+  with_items: "{{revoked}}"
+
 - name: Ensure client keys are generated
   expect:
-    command: "docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full {{item}} nopass"
+    command: "docker exec -it ovpn-tcp easyrsa build-client-full {{item}} nopass"
     responses:
       "pass phrase": "{{pki_password}}"
   when: "client_list.stdout.find(item) == -1"
@@ -92,7 +107,7 @@
   with_items: "{{clients}}"
 
 - name: Save generated keys
-  shell: docker run -v {{data_volume}}:/etc/openvpn --rm kylemanna/openvpn ovpn_getclient {{item[0]}} > {{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn
+  shell: docker exec ovpn-tcp ovpn_getclient {{item[0]}} > {{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn
   args:
     creates: "{{keys_dir}}/{{item[0]}}/{{item[0]}}_{{item[1]}}.ovpn"
   with_nested:
@@ -127,7 +142,7 @@
     - [ "udp" , "tcp" ]
 
 - name: Generate OTP configurations
-  shell: docker run -v {{data_volume}}:/etc/openvpn --rm -t kylemanna/openvpn ovpn_otp_user {{item}} > {{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt
+  shell: docker exec ovpn-tcp ovpn_otp_user {{item}} > {{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt
   args:
     creates: "{{keys_dir}}/{{item}}/{{item}}_google_authenticator.txt"
   with_items: "{{clients}}"
