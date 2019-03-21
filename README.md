@@ -21,6 +21,8 @@
       - me
       - myself
       - mysidekick
+    openvpn_revoked_clients:
+      - thatguy
 
   tasks:
     - name: Call ovenvpn role with vars
@@ -34,6 +36,7 @@
         dns: "{{openvpn_dns}}"
         routes: "{{openvpn_routes}}"
         clients: "{{openvpn_clients}}"
+        revoked: "{{openvpn_revoked_clients}}"
 ```
 
 - **requirements.yml**
