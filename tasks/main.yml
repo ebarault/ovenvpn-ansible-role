@@ -46,6 +46,7 @@
     command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
     timeout: 300 # 5 minutes (Generating DH Params takes time)
     responses:
+      "Passphrase": "{{pki_password}}"
       "pass phrase": "{{pki_password}}"
       "Common Name": "vpn.{{url}}"
     creates: "{{data_volume}}/pki"
@@ -81,6 +82,7 @@
     command: "docker exec -it ovpn-tcp ovpn_revokeclient {{item}} remove"
     responses:
       "Continue": "yes"
+      "Passphrase": "{{pki_password}}"
       "pass phrase": "{{pki_password}}"
   when: "client_list.stdout.find(item) != -1"
   with_items: "{{revoked}}"
@@ -95,6 +97,7 @@
   expect:
     command: "docker exec -it ovpn-tcp easyrsa build-client-full {{item}} nopass"
     responses:
+      "Passphrase": "{{pki_password}}"
       "pass phrase": "{{pki_password}}"
   when: "client_list.stdout.find(item) == -1"
   with_items: "{{clients}}"
