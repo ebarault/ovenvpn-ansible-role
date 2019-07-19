@@ -43,7 +43,7 @@
 
 - name: "Generate PKI"
   expect:
-    command: docker exec -it ovpn-tcp ovpn_initpki
+    command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
     timeout: 300 # 5 minutes (Generating DH Params takes time)
     responses:
       "pass phrase": "{{pki_password}}"
