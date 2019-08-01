@@ -29,6 +29,7 @@
       include_role:
          name: openvpn
       vars:
+        kylemanna_openvpn_version: "2.4"
         data_volume: "{{openvpn_data_volume}}"
         keys_dir: "{{openvpn_keys_dir}}"
         url: "{{openvpn_url}}"

@@ -18,7 +18,7 @@
 - name: Ensure openvpn config is generated (base)
   docker_container:
     name: "tmp-openvpn-genconfig"
-    image: "kylemanna/openvpn"
+    image: "kylemanna/openvpn:{{kylemanna_openvpn_version}}"
     detach: no
     cleanup: yes
     volumes:
@@ -28,7 +28,7 @@
 - name: Ensure openvpn config is generated (adding routes)
   docker_container:
     name: "tmp-openvpn-genconfig-{{ item | to_uuid }}"
-    image: "kylemanna/openvpn"
+    image: "kylemanna/openvpn:{{kylemanna_openvpn_version}}"
     detach: no
     cleanup: yes
     volumes:
@@ -43,7 +43,7 @@
 
 - name: "Generate PKI"
   expect:
-    command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+    command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn:{{kylemanna_openvpn_version}} ovpn_initpki
     timeout: 300 # 5 minutes (Generating DH Params takes time)
     responses:
       "Passphrase": "{{pki_password}}"
@@ -55,7 +55,7 @@
 - name: Ensure openvpn containers are (re)started
   docker_container:
     name: "ovpn-{{item.proto}}"
-    image: "kylemanna/openvpn"
+    image: "kylemanna/openvpn:{{kylemanna_openvpn_version}}"
     pull: yes
     state: started
     recreate: yes

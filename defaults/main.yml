@@ -1,5 +1,5 @@
 ---
-
+kylemanna_openvpn_version: "2.4"
 data_volume: "{{ansible_env.PWD}}/openvpn"
 url: "{{ansible_domain}}"
 pki_password:
