@@ -29,6 +29,7 @@
       include_role:
          name: openvpn
       vars:
+        kylemanna_openvpn_version: "2.4"
         data_volume: "{{openvpn_data_volume}}"
         keys_dir: "{{openvpn_keys_dir}}"
         url: "{{openvpn_url}}"
@@ -45,7 +46,7 @@
 # Install openvpn role from github
 - name: openvpn
   src: https://github.com/ebarault/ovenvpn-ansible-role.git
-  version: "1.2.3.otp"
+  version: "1.3.0.otp"
 ```
 
 ## Client configurations
