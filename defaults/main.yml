@@ -2,7 +2,7 @@
 kylemanna_openvpn_version: "2.4"
 data_volume: "{{ansible_env.PWD}}/openvpn"
 url: "{{ansible_domain}}"
-pki_password:
+pki_password: ""
 keys_dir: "{{ansible_env.PWD}}/clients_keys"
 mtu: 1500
 dns: 208.67.222.222
