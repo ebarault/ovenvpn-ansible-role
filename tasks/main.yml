@@ -1,5 +1,10 @@
 ---
 
+- name: Check required var pki_password is set
+  fail:
+    msg: "pki_password var is not set"
+  when: pki_password | length == 0
+
 - name: pip install docker-py
   pip:
     name: docker-py
