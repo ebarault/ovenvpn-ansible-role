@@ -46,7 +46,7 @@
 # Install openvpn role from github
 - name: openvpn
   src: https://github.com/ebarault/ovenvpn-ansible-role.git
-  version: "1.3.0.otp"
+  version: "1.3.1.otp"
 ```
 
 ## Client configurations
