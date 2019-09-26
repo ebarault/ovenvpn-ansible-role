@@ -1,0 +1,2 @@
+---
+openvpn_pki_password: "{{ lookup('env','OPENVPN_PKI_PASSWORD') }}"
