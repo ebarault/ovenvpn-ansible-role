@@ -1,5 +1,10 @@
 ---
 
+- name: Check required env var OPENVPN_PKI_PASSWORD
+  fail:
+    msg: "OPENVPN_PKI_PASSWORD env var is not set"
+  when: openvpn_pki_password | length == 0
+      
 - name: pip install docker-py
   pip:
     name: docker-py
