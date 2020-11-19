@@ -46,7 +46,7 @@
     path: "{{data_volume}}/pki"
   register: openvpn_pki_check
 
-- name: "Generate PKI"
+- name: Generate PKI
   expect:
     command: docker run -v {{data_volume}}:/etc/openvpn --rm -it kylemanna/openvpn:{{kylemanna_openvpn_version}} ovpn_initpki
     timeout: 300 # 5 minutes (Generating DH Params takes time)
@@ -76,6 +76,10 @@
   with_items:
     - { port: 1194, proto: udp }
     - { port: 443, proto: tcp }
+
+# bug fix: https://github.com/kylemanna/docker-openvpn/issues/605
+- name: Ensure /etc/openvpn/vars in openvpn container
+  command: docker exec ovpn-tcp touch /etc/openvpn/vars
 
 - name: Get current client list
   command: docker exec ovpn-tcp ovpn_listclients
