@@ -77,6 +77,10 @@
     - { port: 1194, proto: udp }
     - { port: 443, proto: tcp }
 
+# bug fix: https://github.com/kylemanna/docker-openvpn/issues/605
+- name: Ensure /etc/openvpn/vars in openvpn container
+  command: docker exec ovpn-tcp touch /etc/openvpn/vars
+
 - name: Get current client list
   command: docker exec ovpn-tcp ovpn_listclients
   check_mode: no
